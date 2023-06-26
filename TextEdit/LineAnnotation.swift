@@ -1,15 +1,29 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
+import Cocoa
 import Foundation
 import STTextView
-import Cocoa
 
-final class LineAnnotation: STLineAnnotation {
-    let message: AttributedString
+final class LineAnnotation: STLineAnnotation
+{
+  let message: AttributedString
 
-    init(message: AttributedString, location: NSTextLocation) {
-        self.message = message
-        super.init(location: location)
-    }
+  init(message: AttributedString, location: NSTextLocation)
+  {
+    self.message = message
+    super.init(location: location)
+  }
 }

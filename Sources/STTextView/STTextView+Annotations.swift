@@ -1,72 +1,98 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
 import Cocoa
 
 /// Line annotation entity.
 /// Usually work with subclass that carry more information about the annotation
 /// needed for the annotation view
-open class STLineAnnotation: NSObject {
-    /// Location in content storage
-    public var location: NSTextLocation
+open class STLineAnnotation: NSObject
+{
+  /// Location in content storage
+  public var location: NSTextLocation
 
-    public init(location: NSTextLocation) {
-        self.location = location
-    }
+  public init(location: NSTextLocation)
+  {
+    self.location = location
+  }
 }
 
-extension STTextView {
+extension STTextView
+{
+  /// Reloads the rows and sections of the table view.
+  ///
+  /// Performs the layout for annotation views.
+  public func reloadData()
+  {
+    layoutAnnotationViewsIfNeeded(forceLayout: true)
+  }
 
-    // Reloads the rows and sections of the table view.
-    //
-    // Performs the layout for annotation views.
-    public func reloadData() {
-        layoutAnnotationViewsIfNeeded(forceLayout: true)
+  /// Layout annotations views if annotations changed since last time.
+  ///
+  /// Called from layout()
+  internal func layoutAnnotationViewsIfNeeded(forceLayout: Bool = false)
+  {
+    guard let dataSource
+    else
+    {
+      return
     }
 
-    /// Layout annotations views if annotations changed since last time.
-    ///
-    /// Called from layout()
-    internal func layoutAnnotationViewsIfNeeded(forceLayout: Bool = false) {
-        guard let dataSource = dataSource else {
-            return
+    let oldAnnotations = {
+      var result: [STLineAnnotation] = []
+      result.reserveCapacity(self.annotationViewMap.count)
+
+      let enumerator = self.annotationViewMap.keyEnumerator()
+      while let key = enumerator.nextObject() as? STLineAnnotation
+      {
+        result.append(key)
+      }
+      return result
+    }()
+
+    let newAnnotations = dataSource.textViewAnnotations(self)
+    let change = Set(oldAnnotations).symmetricDifference(Set(newAnnotations))
+    if forceLayout || !change.isEmpty
+    {
+      for element in change
+      {
+        if oldAnnotations.contains(element)
+        {
+          annotationViewMap.object(forKey: element)?.removeFromSuperview()
+          annotationViewMap.removeObject(forKey: element)
         }
+      }
 
-        let oldAnnotations = {
-            var result: [STLineAnnotation] = []
-            result.reserveCapacity(self.annotationViewMap.count)
-
-            let enumerator = self.annotationViewMap.keyEnumerator()
-            while let key = enumerator.nextObject() as? STLineAnnotation {
-                result.append(key)
-            }
-            return result
-        }()
-
-        let newAnnotations = dataSource.textViewAnnotations(self)
-        let change = Set(oldAnnotations).symmetricDifference(Set(newAnnotations))
-        if forceLayout || !change.isEmpty {
-
-            for element in change {
-                if oldAnnotations.contains(element) {
-                    annotationViewMap.object(forKey: element)?.removeFromSuperview()
-                    annotationViewMap.removeObject(forKey: element)
-                }
-            }
-
-            for annotation in newAnnotations {
-                textLayoutManager.ensureLayout(for: NSTextRange(location: annotation.location))
-                if let textLineFragment = textLayoutManager.textLineFragment(at: annotation.location) {
-                    if let annotationView = dataSource.textView(self, viewForLineAnnotation: annotation, textLineFragment: textLineFragment) {
-                        // Set or Update view
-                        annotationViewMap.object(forKey: annotation)?.removeFromSuperview()
-                        annotationViewMap.setObject(annotationView, forKey: annotation)
-                        addSubview(annotationView)
-                    } else {
-                        assertionFailure()
-                    }
-                }
-            }
+      for annotation in newAnnotations
+      {
+        textLayoutManager.ensureLayout(for: NSTextRange(location: annotation.location))
+        if let textLineFragment = textLayoutManager.textLineFragment(at: annotation.location)
+        {
+          if let annotationView = dataSource.textView(self, viewForLineAnnotation: annotation, textLineFragment: textLineFragment)
+          {
+            // Set or Update view
+            annotationViewMap.object(forKey: annotation)?.removeFromSuperview()
+            annotationViewMap.setObject(annotationView, forKey: annotation)
+            addSubview(annotationView)
+          }
+          else
+          {
+            assertionFailure()
+          }
         }
+      }
     }
+  }
 }

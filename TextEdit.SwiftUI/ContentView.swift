@@ -1,23 +1,39 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
-import SwiftUI
 import STTextViewUI
+import SwiftUI
 
-struct ContentView: View {
-    @State private var text = try! String(contentsOf: Bundle.main.url(forResource: "content", withExtension: "txt")!)
+struct ContentView: View
+{
+  @State private var text = try! String(contentsOf: Bundle.main.url(forResource: "content", withExtension: "txt")!)
 
-    var body: some View {
-        TextView(
-            text: $text,
-            font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
-            options: [.wrapLines, .highlightSelectedLine]
-        )
-    }
+  var body: some View
+  {
+    TextView(
+      text: $text,
+      font: NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
+      options: [.wrapLines, .highlightSelectedLine]
+    )
+  }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+struct ContentView_Previews: PreviewProvider
+{
+  static var previews: some View
+  {
+    ContentView()
+  }
 }

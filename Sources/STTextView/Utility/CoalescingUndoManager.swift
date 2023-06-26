@@ -1,108 +1,147 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
 import Foundation
 
-final class CoalescingUndoManager: UndoManager {
+final class CoalescingUndoManager: UndoManager
+{
+  private(set) var coalescing: (value: TypingTextUndo?, undoAction: ((TypingTextUndo) -> Void)?)?
 
-    private(set) var coalescing: (value: TypingTextUndo?, undoAction: ((TypingTextUndo) -> Void)?)?
+  private var coalescingIsUndoing: Bool = false
+  private var coalescingIsRedoing: Bool = false
 
-    private var coalescingIsUndoing: Bool = false
-    private var coalescingIsRedoing: Bool = false
+  var isCoalescing: Bool
+  {
+    coalescing != nil
+  }
 
-    var isCoalescing: Bool {
-        coalescing != nil
+  func breakCoalescing()
+  {
+    guard isUndoRegistrationEnabled
+    else
+    {
+      return
     }
 
-    func breakCoalescing() {
-        guard isUndoRegistrationEnabled else {
-            return
-        }
-        
-        // register undo and break coalescing
-        if !isUndoing, !isRedoing, let undoAction = coalescing?.undoAction, let value = coalescing?.value {
-            // Disable implicit grouping to avoid group coalescing and non-coalescing undo
-            groupsByEvent = false
-            beginUndoGrouping()
-            registerUndo(withTarget: self) { _ in
-                undoAction(value)
-            }
-            endUndoGrouping()
-            groupsByEvent = true
-        }
-
-        coalescing = nil
+    // register undo and break coalescing
+    if !isUndoing, !isRedoing, let undoAction = coalescing?.undoAction, let value = coalescing?.value
+    {
+      // Disable implicit grouping to avoid group coalescing and non-coalescing undo
+      groupsByEvent = false
+      beginUndoGrouping()
+      registerUndo(withTarget: self)
+      { _ in
+        undoAction(value)
+      }
+      endUndoGrouping()
+      groupsByEvent = true
     }
 
-    override init() {
-        super.init()
-        self.runLoopModes = [.default, .common, .eventTracking, .modalPanel]
+    coalescing = nil
+  }
+
+  override init()
+  {
+    super.init()
+    runLoopModes = [.default, .common, .eventTracking, .modalPanel]
+  }
+
+  func coalesce(_ value: TypingTextUndo)
+  {
+    guard isUndoRegistrationEnabled
+    else
+    {
+      return
     }
 
-    func coalesce(_ value: TypingTextUndo) {
-        guard isUndoRegistrationEnabled else {
-            return
-        }
+    assert(isCoalescing, "Coalescing not started. Call startCoalescing(withTarget:_) first")
 
-        assert(isCoalescing, "Coalescing not started. Call startCoalescing(withTarget:_) first")
+    coalescing = (value: value, undoAction: coalescing?.undoAction)
+  }
 
-        coalescing = (value: value, undoAction: coalescing?.undoAction)
-        return
+  func startCoalescing<Target>(_ value: TypingTextUndo, withTarget target: Target, _ undoAction: @escaping (Target, TypingTextUndo) -> Void) where Target: AnyObject
+  {
+    guard isUndoRegistrationEnabled else { return }
+    coalescing = (value: value, undoAction: { undoAction(target, $0) })
+  }
+
+  override var canRedo: Bool
+  {
+    super.canRedo
+  }
+
+  override var canUndo: Bool
+  {
+    super.canUndo || isCoalescing
+  }
+
+  override var isUndoing: Bool
+  {
+    super.isUndoing || coalescingIsUndoing
+  }
+
+  override var isRedoing: Bool
+  {
+    super.isRedoing || coalescingIsRedoing
+  }
+
+  override func undo()
+  {
+    if let undoAction = coalescing?.undoAction, let value = coalescing?.value
+    {
+      coalescingIsUndoing = true
+      undoAction(value)
+      breakCoalescing()
+      coalescingIsUndoing = false
+      // FIXME: call undo to register redo
+      // When the Undo system performs an undo action,
+      // it expects me to register the redo actions using the same code as for undo.
+      // That makes the coalescing flow tricky to make right right now
     }
-
-    func startCoalescing<Target>(_ value: TypingTextUndo, withTarget target: Target, _ undoAction: @escaping (Target, TypingTextUndo) -> Void) where Target: AnyObject {
-        guard isUndoRegistrationEnabled else { return }
-        coalescing = (value: value, undoAction: { undoAction(target, $0) })
+    else
+    {
+      super.undo()
     }
+  }
 
-    override var canRedo: Bool {
-        super.canRedo
-    }
+  override func redo()
+  {
+    super.redo()
+  }
 
-    override var canUndo: Bool {
-        super.canUndo || isCoalescing
+  override var undoMenuItemTitle: String
+  {
+    if canUndo
+    {
+      return super.undoMenuItemTitle
     }
+    else
+    {
+      return NSLocalizedString("Undo", comment: "Undo")
+    }
+  }
 
-    override var isUndoing: Bool {
-        super.isUndoing || coalescingIsUndoing
+  override var redoMenuItemTitle: String
+  {
+    if canRedo
+    {
+      return super.redoMenuItemTitle
     }
-
-    override var isRedoing: Bool {
-        super.isRedoing || coalescingIsRedoing
+    else
+    {
+      return NSLocalizedString("Redo", comment: "Redo")
     }
-
-    override func undo() {
-        if let undoAction = coalescing?.undoAction, let value = coalescing?.value {
-            coalescingIsUndoing = true
-            undoAction(value)
-            breakCoalescing()
-            coalescingIsUndoing = false
-            // FIXME: call undo to register redo
-            // When the Undo system performs an undo action,
-            // it expects me to register the redo actions using the same code as for undo.
-            // That makes the coalescing flow tricky to make right right now
-        } else {
-            super.undo()
-        }
-    }
-
-    override func redo() {
-        super.redo()
-    }
-
-    override var undoMenuItemTitle: String {
-        if canUndo {
-            return super.undoMenuItemTitle
-        } else {
-            return NSLocalizedString("Undo", comment: "Undo")
-        }
-    }
-
-    override var redoMenuItemTitle: String {
-        if canRedo {
-            return super.redoMenuItemTitle
-        } else {
-            return NSLocalizedString("Redo", comment: "Redo")
-        }
-    }
+  }
 }

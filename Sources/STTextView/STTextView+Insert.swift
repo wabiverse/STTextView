@@ -1,57 +1,84 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
 import Cocoa
 
-extension STTextView {
-
-    open override func insertLineBreak(_ sender: Any?) {
-        guard let scalar = Unicode.Scalar(NSLineSeparatorCharacter) else {
-            assertionFailure()
-            return
-        }
-
-        insertText(String(Character(scalar)), replacementRange: .notFound)
+extension STTextView
+{
+  override open func insertLineBreak(_: Any?)
+  {
+    guard let scalar = Unicode.Scalar(NSLineSeparatorCharacter)
+    else
+    {
+      assertionFailure()
+      return
     }
 
-    open override func insertTab(_ sender: Any?) {
-        guard let scalar = Unicode.Scalar(NSTabCharacter) else {
-            assertionFailure()
-            return
-        }
-        insertText(String(Character(scalar)), replacementRange: .notFound)
-    }
+    insertText(String(Character(scalar)), replacementRange: .notFound)
+  }
 
-    open override func insertBacktab(_ sender: Any?) {
-        guard let scalar = Unicode.Scalar(NSBackTabCharacter) else {
-            assertionFailure()
-            return
-        }
-        insertText(String(Character(scalar)), replacementRange: .notFound)
+  override open func insertTab(_: Any?)
+  {
+    guard let scalar = Unicode.Scalar(NSTabCharacter)
+    else
+    {
+      assertionFailure()
+      return
     }
+    insertText(String(Character(scalar)), replacementRange: .notFound)
+  }
 
-    open override func insertTabIgnoringFieldEditor(_ sender: Any?) {
-        insertTab(sender)
+  override open func insertBacktab(_: Any?)
+  {
+    guard let scalar = Unicode.Scalar(NSBackTabCharacter)
+    else
+    {
+      assertionFailure()
+      return
     }
+    insertText(String(Character(scalar)), replacementRange: .notFound)
+  }
 
-    open override func insertParagraphSeparator(_ sender: Any?) {
-        guard let scalar = Unicode.Scalar(NSParagraphSeparatorCharacter) else {
-            assertionFailure()
-            return
-        }
-        insertText(String(Character(scalar)), replacementRange: .notFound)
+  override open func insertTabIgnoringFieldEditor(_ sender: Any?)
+  {
+    insertTab(sender)
+  }
+
+  override open func insertParagraphSeparator(_: Any?)
+  {
+    guard let scalar = Unicode.Scalar(NSParagraphSeparatorCharacter)
+    else
+    {
+      assertionFailure()
+      return
     }
+    insertText(String(Character(scalar)), replacementRange: .notFound)
+  }
 
-    open override func insertNewline(_ sender: Any?) {
-        insertText("\n")
-    }
+  override open func insertNewline(_: Any?)
+  {
+    insertText("\n")
+  }
 
-    open override func insertNewlineIgnoringFieldEditor(_ sender: Any?) {
-        insertNewline(sender)
-    }
+  override open func insertNewlineIgnoringFieldEditor(_ sender: Any?)
+  {
+    insertNewline(sender)
+  }
 
-    open override func insertText(_ insertString: Any) {
-        insertText(insertString, replacementRange: .notFound)
-    }
-
+  override open func insertText(_ insertString: Any)
+  {
+    insertText(insertString, replacementRange: .notFound)
+  }
 }

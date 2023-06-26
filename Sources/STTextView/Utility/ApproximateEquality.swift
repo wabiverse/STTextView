@@ -1,15 +1,20 @@
-//===--- ApproximateEquality.swift ----------------------------*- swift -*-===//
-//
-// This source file is part of the Swift Numerics open source project
-//
-// Copyright (c) 2019 - 2020 Apple Inc. and the Swift Numerics project authors
-// Licensed under Apache License v2.0 with Runtime Library Exception
-//
-// See https://swift.org/LICENSE.txt for license information
-//
-//===----------------------------------------------------------------------===//
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
-extension FloatingPoint {
+public extension FloatingPoint
+{
   /// Test approximate equality with relative tolerance.
   ///
   /// Do not use this function to check if a number is approximately
@@ -58,24 +63,27 @@ extension FloatingPoint {
   /// - Returns: `true` if `self` is almost equal to `other`; otherwise
   ///   `false`.
   @inlinable
-  public func isAlmostEqual(
+  func isAlmostEqual(
     to other: Self,
     tolerance: Self = Self.ulpOfOne.squareRoot()
-  ) -> Bool {
+  ) -> Bool
+  {
     // Tolerances outside of [.ulpOfOne, 1) yield well-defined but useless
     // results, so this is enforced by an assert rathern than a precondition.
     assert(tolerance >= .ulpOfOne && tolerance < 1, "tolerance should be in [.ulpOfOne, 1).")
     // The simple computation below does not necessarily give sensible
     // results if one of self or other is infinite; we need to rescale
     // the computation in that case.
-    guard self.isFinite && other.isFinite else {
+    guard isFinite, other.isFinite
+    else
+    {
       return rescaledAlmostEqual(to: other, tolerance: tolerance)
     }
     // This should eventually be rewritten to use a scaling facility to be
     // defined on FloatingPoint suitable for hypot and scaled sums, but the
     // following is good enough to be useful for now.
     let scale = max(abs(self), abs(other), .leastNormalMagnitude)
-    return abs(self - other) < scale*tolerance
+    return abs(self - other) < scale * tolerance
   }
 
   /// Test if this value is nearly zero with a specified `absoluteTolerance`.
@@ -110,9 +118,10 @@ extension FloatingPoint {
   /// - Returns: `true` if `abs(self)` is less than `absoluteTolerance`.
   ///            `false` otherwise.
   @inlinable
-  public func isAlmostZero(
+  func isAlmostZero(
     absoluteTolerance tolerance: Self = Self.ulpOfOne.squareRoot()
-  ) -> Bool {
+  ) -> Bool
+  {
     assert(tolerance > 0)
     return abs(self) < tolerance
   }
@@ -121,16 +130,18 @@ extension FloatingPoint {
   /// is infinite. We also handle NaN here so that the fast path doesn't
   /// need to worry about it.
   @usableFromInline
-  internal func rescaledAlmostEqual(to other: Self, tolerance: Self) -> Bool {
+  internal func rescaledAlmostEqual(to other: Self, tolerance: Self) -> Bool
+  {
     // NaN is considered to be not approximately equal to anything, not even
     // itself.
-    if self.isNaN || other.isNaN { return false }
-    if self.isInfinite {
+    if isNaN || other.isNaN { return false }
+    if isInfinite
+    {
       if other.isInfinite { return self == other }
       // Self is infinite and other is finite. Replace self with the binade
       // of the greatestFiniteMagnitude, and reduce the exponent of other by
       // one to compensate.
-      let scaledSelf = Self(sign: self.sign,
+      let scaledSelf = Self(sign: sign,
                             exponent: Self.greatestFiniteMagnitude.exponent,
                             significand: 1)
       let scaledOther = Self(sign: .plus,

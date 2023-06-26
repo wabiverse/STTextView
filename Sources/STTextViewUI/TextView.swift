@@ -1,120 +1,145 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
 import Foundation
-import SwiftUI
 import STTextView
+import SwiftUI
 
-public struct TextView: SwiftUI.View {
+public struct TextView: SwiftUI.View
+{
+  @frozen
+  public struct Options: OptionSet
+  {
+    public let rawValue: Int
 
-    @frozen
-    public struct Options: OptionSet {
-        public let rawValue: Int
+    public init(rawValue: Int)
+    {
+      self.rawValue = rawValue
+    }
 
-        public init(rawValue: Int) {
-            self.rawValue = rawValue
+    public static let wrapLines = Options(rawValue: 1 << 0)
+    public static let highlightSelectedLine = Options(rawValue: 1 << 1)
+  }
+
+  @Environment(\.colorScheme) private var colorScheme
+
+  @Binding private var text: AttributedString
+  private var font: NSFont
+  private let options: Options
+
+  public init(
+    text: Binding<AttributedString>,
+    font: NSFont = .preferredFont(forTextStyle: .body),
+    options: Options = []
+  )
+  {
+    _text = text
+    self.font = font
+    self.options = options
+  }
+
+  public init(
+    text: Binding<String>,
+    font: NSFont = .preferredFont(forTextStyle: .body),
+    options: Options = []
+  )
+  {
+    self = TextView(
+      text: Binding(
+        get: {
+          var container = AttributeContainer()
+          // Swift 5.9 bogus warning: Conformance of 'NSFont' to 'Sendable' is unavailable
+          // AttributeScopes.AppKitAttributes.FontAttribute requires NSFont and Sendable
+          // that is impossible compbination.
+          container[AttributeScopes.AppKitAttributes.FontAttribute.self] = font
+          return AttributedString(text.wrappedValue, attributes: container)
+        },
+        set: { attributedString in
+          text.wrappedValue = String(attributedString.characters[...])
         }
+      ),
+      font: font,
+      options: options
+    )
+  }
 
-        public static let wrapLines = Options(rawValue: 1 << 0)
-        public static let highlightSelectedLine = Options(rawValue: 1 << 1)
-    }
-
-    @Environment(\.colorScheme) private var colorScheme
-
-    @Binding private var text: AttributedString
-    private var font: NSFont
-    private let options: Options
-
-    public init(
-        text: Binding<AttributedString>,
-        font: NSFont = .preferredFont(forTextStyle: .body),
-        options: Options = []
-    ) {
-        _text = text
-        self.font = font
-        self.options = options
-    }
-
-    public init(
-        text: Binding<String>,
-        font: NSFont = .preferredFont(forTextStyle: .body),
-        options: Options = []
-    ) {
-        self = TextView(
-            text: Binding(
-                get: {
-                    var container = AttributeContainer()
-                    // Swift 5.9 bogus warning: Conformance of 'NSFont' to 'Sendable' is unavailable
-                    // AttributeScopes.AppKitAttributes.FontAttribute requires NSFont and Sendable
-                    // that is impossible compbination.
-                    container[AttributeScopes.AppKitAttributes.FontAttribute.self] = font
-                    return AttributedString(text.wrappedValue, attributes: container)
-                },
-                set: { attributedString in
-                    text.wrappedValue = String(attributedString.characters[...])
-                }
-            ),
-            font: font,
-            options: options
-        )
-    }
-
-    public var body: some View {
-        TextViewRepresentable(
-            text: $text,
-            font: font,
-            options: options
-        )
-        .background(.background)
-    }
+  public var body: some View
+  {
+    TextViewRepresentable(
+      text: $text,
+      font: font,
+      options: options
+    )
+    .background(.background)
+  }
 }
 
-private struct TextViewRepresentable: NSViewRepresentable {
-    @Environment(\.isEnabled) private var isEnabled
+private struct TextViewRepresentable: NSViewRepresentable
+{
+  @Environment(\.isEnabled) private var isEnabled
 
-    @Binding var text: AttributedString
-    var font: NSFont
-    var options: TextView.Options
+  @Binding var text: AttributedString
+  var font: NSFont
+  var options: TextView.Options
 
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = STTextView.scrollableTextView()
-        let textView = scrollView.documentView as! STTextView
-        textView.font = font
-        textView.setAttributedString(NSAttributedString(text))
-        textView.delegate = context.coordinator
-        textView.highlightSelectedLine = options.contains(.highlightSelectedLine)
-        textView.widthTracksTextView = options.contains(.wrapLines)
-        textView.setSelectedRange(NSRange())
-        return scrollView
+  func makeNSView(context: Context) -> NSScrollView
+  {
+    let scrollView = STTextView.scrollableTextView()
+    let textView = scrollView.documentView as! STTextView
+    textView.font = font
+    textView.setAttributedString(NSAttributedString(text))
+    textView.delegate = context.coordinator
+    textView.highlightSelectedLine = options.contains(.highlightSelectedLine)
+    textView.widthTracksTextView = options.contains(.wrapLines)
+    textView.setSelectedRange(NSRange())
+    return scrollView
+  }
+
+  func updateNSView(_ scrollView: NSScrollView, context: Context)
+  {
+    context.coordinator.parent = self
+
+    let textView = scrollView.documentView as! STTextView
+    textView.isEditable = isEnabled
+    textView.isSelectable = isEnabled
+    textView.widthTracksTextView = options.contains(.wrapLines)
+  }
+
+  func makeCoordinator() -> TextCoordinator
+  {
+    TextCoordinator(parent: self)
+  }
+
+  class TextCoordinator: STTextViewDelegate
+  {
+    var parent: TextViewRepresentable
+
+    init(parent: TextViewRepresentable)
+    {
+      self.parent = parent
     }
 
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        context.coordinator.parent = self
+    func textViewDidChangeText(_ notification: Notification)
+    {
+      guard let textView = notification.object as? STTextView
+      else
+      {
+        return
+      }
 
-        let textView = scrollView.documentView as! STTextView
-        textView.isEditable = isEnabled
-        textView.isSelectable = isEnabled
-        textView.widthTracksTextView = options.contains(.wrapLines)
+      parent.text = AttributedString(textView.attributedString())
     }
-
-    func makeCoordinator() -> TextCoordinator {
-        TextCoordinator(parent: self)
-    }
-
-    class TextCoordinator: STTextViewDelegate {
-        var parent: TextViewRepresentable
-
-        init(parent: TextViewRepresentable) {
-            self.parent = parent
-        }
-
-        func textViewDidChangeText(_ notification: Notification) {
-            guard let textView = notification.object as? STTextView else {
-                return
-            }
-
-            parent.text = AttributedString(textView.attributedString())
-        }
-
-    }
+  }
 }
