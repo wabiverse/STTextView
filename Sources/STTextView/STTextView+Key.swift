@@ -1,31 +1,50 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ * D.Kirkpatrick  @dkirkpatrick99  <d.kirkpatrick99@gmail.com>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
 import Cocoa
 
-extension STTextView {
-    open override func keyDown(with event: NSEvent) {
-        
-        guard isEditable else {
-            super.keyDown(with: event)
-            return
-        }
-
-        processingKeyEvent = true
-        defer {
-            processingKeyEvent = false
-        }
-
-        NSCursor.setHiddenUntilMouseMoves(true)
-
-        // ^Space -> complete:
-        if event.modifierFlags.contains(.control) && event.charactersIgnoringModifiers == " " {
-            doCommand(by: #selector(NSStandardKeyBindingResponding.complete(_:)))
-            return
-        }
-
-        if inputContext?.handleEvent(event) == false {
-            interpretKeyEvents([event])
-        }
+extension STTextView
+{
+  override open func keyDown(with event: NSEvent)
+  {
+    guard isEditable
+    else
+    {
+      super.keyDown(with: event)
+      return
     }
+
+    processingKeyEvent = true
+    defer
+    {
+      processingKeyEvent = false
+    }
+
+    NSCursor.setHiddenUntilMouseMoves(true)
+
+    // ^Space -> complete:
+    if event.modifierFlags.contains(.control), event.charactersIgnoringModifiers == " "
+    {
+      doCommand(by: #selector(NSStandardKeyBindingResponding.complete(_:)))
+      return
+    }
+
+    if inputContext?.handleEvent(event) == false
+    {
+      interpretKeyEvents([event])
+    }
+  }
 }

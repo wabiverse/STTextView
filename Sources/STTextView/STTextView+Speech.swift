@@ -1,23 +1,40 @@
-//  Created by Marcin Krzyzanowski
-//  https://github.com/krzyzanowskim/STTextView/blob/main/LICENSE.md
+/* -----------------------------------------------------------
+ * :: :  C  O  S  M  O  :                                   ::
+ * -----------------------------------------------------------
+ * @wabistudios :: cosmos :: realms
+ *
+ * CREDITS.
+ *
+ * T.Furby              @furby-tm       <devs@wabi.foundation>
+ * D.Kirkpatrick  @dkirkpatrick99  <d.kirkpatrick99@gmail.com>
+ *
+ *         Copyright (C) 2023 Wabi Animation Studios, Ltd. Co.
+ *                                        All Rights Reserved.
+ * -----------------------------------------------------------
+ *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
+ * ----------------------------------------------------------- */
 
-import Foundation
 import Cocoa
+import Foundation
 
-extension STTextView {
+extension STTextView
+{
+  /// Speaks the selected text, or all text if no selection.
+  @objc func startSpeaking(_ sender: Any?)
+  {
+    stopSpeaking(sender)
+    speechSynthesizer.startSpeaking(textLayoutManager.textSelectionsString() ?? string)
+  }
 
-    /// Speaks the selected text, or all text if no selection.
-    @objc func startSpeaking(_ sender: Any?) {
-        stopSpeaking(sender)
-        speechSynthesizer.startSpeaking(textLayoutManager.textSelectionsString() ?? string)
+  /// Stops the speaking of text.
+  @objc func stopSpeaking(_: Any?)
+  {
+    guard speechSynthesizer.isSpeaking
+    else
+    {
+      return
     }
 
-    /// Stops the speaking of text.
-    @objc func stopSpeaking(_ sender: Any?) {
-        guard speechSynthesizer.isSpeaking else {
-            return
-        }
-
-        speechSynthesizer.stopSpeaking(at: .immediateBoundary)
-    }
+    speechSynthesizer.stopSpeaking(at: .immediateBoundary)
+  }
 }
