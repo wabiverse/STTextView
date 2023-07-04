@@ -988,8 +988,10 @@ open class STTextView: NSView, NSTextInput, NSTextContent
 
   override open func setFrameSize(_ newSize: NSSize)
   {
-    super.setFrameSize(.init(width: CGFloat(Float(min(Float.greatestFiniteMagnitude, Float(newSize.width)))), 
-                             height: CGFloat(Float(min(Float.greatestFiniteMagnitude, Float(newSize.height))))))
+    let maxW = CGFloat(Float(min(Float.greatestFiniteMagnitude, Float(newSize.width))))
+    let maxH = CGFloat(Float(min(Float.greatestFiniteMagnitude, Float(newSize.height))))
+
+    super.setFrameSize(.init(width: abs(maxW), height: abs(maxH)))
     updateTextContainerSizeIfNeeded()
     layoutAnnotationViewsIfNeeded(forceLayout: true)
   }
