@@ -988,7 +988,7 @@ open class STTextView: NSView, NSTextInput, NSTextContent
 
   override open func setFrameSize(_ newSize: NSSize)
   {
-    let constrainedSize = NSSize(width: CGFloat(min(Float.greatestFiniteMagnitude, newSize.width)), 
+    let constrainedSize = CGSize(width: CGFloat(min(Float.greatestFiniteMagnitude, newSize.width)), 
                                  height: CGFloat(min(Float.greatestFiniteMagnitude, newSize.height)))
 
     super.setFrameSize(constrainedSize)
