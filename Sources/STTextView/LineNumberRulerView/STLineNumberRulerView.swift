@@ -229,6 +229,12 @@ open class STLineNumberRulerView: NSRulerView
 
       textLayoutManager.enumerateTextLayoutFragments(from: firstFragmentLayout.rangeInElement.location, options: [.ensuresLayout, .ensuresExtraLineFragment])
       { layoutFragment in
+        let shouldContinue = layoutFragment.rangeInElement.location <= viewportRange.endLocation
+        if !shouldContinue
+        {
+          return false
+        }
+
         for lineFragment in layoutFragment.textLineFragments where lineFragment.isExtraLineFragment || layoutFragment.textLineFragments.first == lineFragment
         {
           var baselineOffset: CGFloat = 0
@@ -264,7 +270,7 @@ open class STLineNumberRulerView: NSRulerView
           )
         }
 
-        return layoutFragment.rangeInElement.location <= viewportRange.endLocation
+        return shouldContinue
       }
     }
 

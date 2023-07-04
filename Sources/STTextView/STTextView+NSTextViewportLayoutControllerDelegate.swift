@@ -56,7 +56,7 @@ extension STTextView: NSTextViewportLayoutControllerDelegate
 
   public func textViewportLayoutController(_: NSTextViewportLayoutController, configureRenderingSurfaceFor textLayoutFragment: NSTextLayoutFragment)
   {
-    let fragmentView = fragmentViewMap.object(forKey: textLayoutFragment) ?? STTextLayoutFragmentView(layoutFragment: textLayoutFragment)
+    let fragmentView = fragmentViewMap.object(forKey: textLayoutFragment) ?? TextLayoutFragmentView(layoutFragment: textLayoutFragment, frame: .zero)
     // Adjust position
     let oldFrame = fragmentView.frame
     fragmentView.frame = textLayoutFragment.layoutFragmentFrame.pixelAligned

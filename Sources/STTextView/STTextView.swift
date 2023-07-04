@@ -403,7 +403,7 @@ open class STTextView: NSView, NSTextInput, NSTextContent
   internal let contentView: ContentView
   internal let selectionView: SelectionView
   internal var backingScaleFactor: CGFloat { window?.backingScaleFactor ?? 1 }
-  internal var fragmentViewMap: NSMapTable<NSTextLayoutFragment, STTextLayoutFragmentView>
+  internal var fragmentViewMap: NSMapTable<NSTextLayoutFragment, TextLayoutFragmentView>
   private var usageBoundsForTextContainerObserver: NSKeyValueObservation?
   internal lazy var speechSynthesizer: NSSpeechSynthesizer = .init()
 
@@ -500,6 +500,7 @@ open class STTextView: NSView, NSTextInput, NSTextContent
   /// location is too close to each other, therefore `mouseDraggingSelectionAnchors`
   /// keep the anchors unchanged while dragging.
   internal var mouseDraggingSelectionAnchors: [NSTextSelection]? = nil
+  internal var draggingSession: NSDraggingSession? = nil
 
   override open class var defaultMenu: NSMenu?
   {
@@ -566,12 +567,14 @@ open class STTextView: NSView, NSTextInput, NSTextContent
     addSubview(selectionView)
     addSubview(contentView)
 
+    addGestureRecognizer(dragSelectedTextGestureRecognizer())
+
     // Forward didChangeSelectionNotification from STTextLayoutManager
     NotificationCenter.default.addObserver(forName: STTextView.didChangeSelectionNotification, object: textLayoutManager, queue: .main)
     { [weak self] notification in
       guard let self else { return }
 
-      Yanking.shared.selectionChanged()
+      YankingManager.shared.selectionChanged()
 
       NotificationCenter.default.post(
         Notification(name: STTextView.didChangeSelectionNotification, object: self, userInfo: notification.userInfo)
@@ -949,8 +952,13 @@ open class STTextView: NSView, NSTextInput, NSTextContent
       let endLocation = textLayoutManager.textViewportLayoutController.viewportRange?.endLocation ?? textLayoutManager.documentRange.endLocation
       textLayoutManager.enumerateTextLayoutFragments(from: startLocation, options: [.ensuresLayout, .ensuresExtraLineFragment])
       { layoutFragment in
+        let shouldContinue = layoutFragment.rangeInElement.location <= endLocation
+        if !shouldContinue
+        {
+          return false
+        }
         proposedWidth = max(proposedWidth, layoutFragment.layoutFragmentFrame.maxX)
-        return layoutFragment.rangeInElement.location < endLocation
+        return shouldContinue
       }
     }
     else
@@ -988,10 +996,7 @@ open class STTextView: NSView, NSTextInput, NSTextContent
 
   override open func setFrameSize(_ newSize: NSSize)
   {
-    let maxW = CGFloat(Float(min(Float.greatestFiniteMagnitude, Float(newSize.width))))
-    let maxH = CGFloat(Float(min(Float.greatestFiniteMagnitude, Float(newSize.height))))
-
-    super.setFrameSize(.init(width: abs(maxW), height: abs(maxH)))
+    super.setFrameSize(newSize)
     updateTextContainerSizeIfNeeded()
     layoutAnnotationViewsIfNeeded(forceLayout: true)
   }
@@ -1027,7 +1032,7 @@ open class STTextView: NSView, NSTextInput, NSTextContent
 
     if selectionTextRange.isEmpty
     {
-      if let selectionRect = textLayoutManager.textSelectionSegmentFrame(at: selectionTextRange.location, type: .selection)
+      if let selectionRect = textLayoutManager.textSegmentFrame(at: selectionTextRange.location, type: .selection)
       {
         scrollToVisible(selectionRect.margin(.init(width: visibleRect.width * 0.1, height: 0)))
       }
@@ -1037,13 +1042,13 @@ open class STTextView: NSView, NSTextInput, NSTextContent
       switch selection.affinity
       {
         case .upstream:
-          if let selectionRect = textLayoutManager.textSelectionSegmentFrame(at: selectionTextRange.location, type: .selection)
+          if let selectionRect = textLayoutManager.textSegmentFrame(at: selectionTextRange.location, type: .selection)
           {
             scrollToVisible(selectionRect.margin(.init(width: visibleRect.width * 0.1, height: 0)))
           }
         case .downstream:
           if let location = textLayoutManager.location(selectionTextRange.endLocation, offsetBy: -1),
-             let selectionRect = textLayoutManager.textSelectionSegmentFrame(at: location, type: .selection)
+             let selectionRect = textLayoutManager.textSegmentFrame(at: location, type: .selection)
           {
             scrollToVisible(selectionRect.margin(.init(width: visibleRect.width * 0.1, height: 0)))
           }
@@ -1092,7 +1097,7 @@ open class STTextView: NSView, NSTextInput, NSTextContent
     let notification = Notification(name: STTextView.textDidChangeNotification, object: self, userInfo: nil)
     NotificationCenter.default.post(notification)
     delegate?.textViewDidChangeText(notification)
-    Yanking.shared.textChanged()
+    YankingManager.shared.textChanged()
 
     // Because annotation location position changed
     // we need to reposition all views that may be
@@ -1267,6 +1272,12 @@ open class STTextView: NSView, NSTextInput, NSTextContent
   {
     (undoManager as? CoalescingUndoManager)?.isCoalescing ?? false
   }
+
+  /// Releases the drag information still existing after the dragging session has completed.
+  ///
+  /// Subclasses may override this method to clean up any additional data structures used for dragging. In your overridden method, be sure to invoke super’s implementation of this method.
+  open func cleanUpAfterDragOperation()
+  {}
 }
 
 // MARK: - NSViewInvalidating

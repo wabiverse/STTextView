@@ -14,38 +14,17 @@
  * ----------------------------------------------------------- */
 
 import Cocoa
-import CoreGraphics
 
-final class STTextLayoutFragmentView: NSView
+extension STTextView: NSDraggingSource
 {
-  private let layoutFragment: NSTextLayoutFragment
-
-  override var isFlipped: Bool
+  public func draggingSession(_: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation
   {
-    #if os(macOS)
-      true
-    #else
-      false
-    #endif
+    context == .outsideApplication ? .copy : .move
   }
 
-  init(layoutFragment: NSTextLayoutFragment)
+  public func draggingSession(_: NSDraggingSession, endedAt _: NSPoint, operation _: NSDragOperation)
   {
-    self.layoutFragment = layoutFragment
-    super.init(frame: .zero)
-    wantsLayer = true
-    needsDisplay = true
-  }
-
-  @available(*, unavailable)
-  required init?(coder _: NSCoder)
-  {
-    fatalError("init(coder:) has not been implemented")
-  }
-
-  override func draw(_: NSRect)
-  {
-    guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-    layoutFragment.draw(at: .zero, in: ctx)
+    cleanUpAfterDragOperation()
+    draggingSession = nil
   }
 }

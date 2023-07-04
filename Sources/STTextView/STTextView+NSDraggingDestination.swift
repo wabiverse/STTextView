@@ -13,20 +13,16 @@
  *  . x x x . o o o . x x x . : : : .    o  x  o    . : : : .
  * ----------------------------------------------------------- */
 
-import Foundation
+import Cocoa
 
+/// A set of methods that the destination object (or recipient) of a dragged image must implement.
+///
+/// NSView conforms to NSDraggingDestination
 extension STTextView
 {
-  /// Yanking means reinserting text previously killed. The usual way to move or copy text is to kill it and then yank it elsewhere.
-  ///
-  /// https://www.gnu.org/software/emacs/manual/html_node/emacs/Yanking.html
-  override open func yank(_: Any?)
+  override open func concludeDragOperation(_ sender: NSDraggingInfo?)
   {
-    replaceCharacters(
-      in: textLayoutManager.insertionPointSelections.flatMap(\.textRanges),
-      with: YankingManager.shared.yank(),
-      useTypingAttributes: true,
-      allowsTypingCoalescing: false
-    )
+    super.concludeDragOperation(sender)
+    cleanUpAfterDragOperation()
   }
 }

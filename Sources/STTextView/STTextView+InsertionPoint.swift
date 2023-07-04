@@ -28,7 +28,7 @@ public extension STTextView
 
     if shouldDrawInsertionPoint
     {
-      for textRange in textLayoutManager.insertionPointSelections.flatMap(\.textRanges)
+      for textRange in textLayoutManager.insertionPointSelections.flatMap(\.textRanges) where textRange.isEmpty
       {
         textLayoutManager.enumerateTextSegments(in: textRange, type: .selection, options: .rangeNotRequired)
         { _, textSegmentFrame, _, _ in
