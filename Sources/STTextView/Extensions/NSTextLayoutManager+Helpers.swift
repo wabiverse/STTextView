@@ -15,9 +15,9 @@
 
 import Cocoa
 
-extension NSTextLayoutManager
+public extension NSTextLayoutManager
 {
-  public func substring(for range: NSTextRange) -> String?
+  func substring(for range: NSTextRange) -> String?
   {
     guard !range.isEmpty else { return nil }
     var output = String()
@@ -36,13 +36,13 @@ extension NSTextLayoutManager
     return output
   }
 
-  struct TextSelectionRangesOptions: OptionSet
+  internal struct TextSelectionRangesOptions: OptionSet
   {
     let rawValue: UInt
     static let withoutInsertionPoints = TextSelectionRangesOptions(rawValue: 1 << 0)
   }
 
-  func textSelectionsRanges(_ options: TextSelectionRangesOptions = []) -> [NSTextRange]
+  internal func textSelectionsRanges(_ options: TextSelectionRangesOptions = []) -> [NSTextRange]
   {
     if options.contains(.withoutInsertionPoints)
     {
@@ -54,7 +54,7 @@ extension NSTextLayoutManager
     }
   }
 
-  public func textSelectionsString() -> String?
+  func textSelectionsString() -> String?
   {
     textSelections.flatMap(\.textRanges).compactMap
     { textRange in
@@ -62,12 +62,12 @@ extension NSTextLayoutManager
     }.joined(separator: "\n")
   }
 
-  public func textSelectionsAttributedString() -> NSAttributedString?
+  func textSelectionsAttributedString() -> NSAttributedString?
   {
     textAttributedString(in: textSelections.flatMap(\.textRanges))
   }
 
-  public func textAttributedString(in textRanges: [NSTextRange]) -> NSAttributedString?
+  func textAttributedString(in textRanges: [NSTextRange]) -> NSAttributedString?
   {
     let attributedString = textRanges.reduce(NSMutableAttributedString())
     { partialResult, range in
@@ -90,12 +90,12 @@ extension NSTextLayoutManager
   }
 
   ///  A text segment is both logically and visually contiguous portion of the text content inside a line fragment.
-  public func textSegmentFrame(at location: NSTextLocation, type: NSTextLayoutManager.SegmentType) -> CGRect?
+  func textSegmentFrame(at location: NSTextLocation, type: NSTextLayoutManager.SegmentType) -> CGRect?
   {
     textSegmentFrame(in: NSTextRange(location: location), type: type)
   }
 
-  public func textSegmentFrame(in textRange: NSTextRange, type: NSTextLayoutManager.SegmentType) -> CGRect?
+  func textSegmentFrame(in textRange: NSTextRange, type: NSTextLayoutManager.SegmentType) -> CGRect?
   {
     var result: CGRect?
     // .upstreamAffinity: When specified, the segment is placed based on the upstream affinity for an empty range.
@@ -118,18 +118,18 @@ extension NSTextLayoutManager
     return result
   }
 
-  public func textLineFragment(at location: NSTextLocation) -> NSTextLineFragment?
+  func textLineFragment(at location: NSTextLocation) -> NSTextLineFragment?
   {
     textLayoutFragment(for: location)?.textLineFragment(at: location)
   }
 
-  public func textLineFragment(at point: CGPoint) -> NSTextLineFragment?
+  func textLineFragment(at point: CGPoint) -> NSTextLineFragment?
   {
     textLayoutFragment(for: point)?.textLineFragment(at: point)
   }
 
   @discardableResult
-  public func enumerateTextLayoutFragments(in range: NSTextRange, options: NSTextLayoutFragment.EnumerationOptions = [], using block: (NSTextLayoutFragment) -> Bool) -> NSTextLocation?
+  func enumerateTextLayoutFragments(in range: NSTextRange, options: NSTextLayoutFragment.EnumerationOptions = [], using block: (NSTextLayoutFragment) -> Bool) -> NSTextLocation?
   {
     enumerateTextLayoutFragments(from: range.location, options: options)
     { layoutFragment in
@@ -182,15 +182,15 @@ public extension NSTextLayoutManager
   }
 }
 
-extension NSTextLayoutFragment
+public extension NSTextLayoutFragment
 {
   @available(*, deprecated, message: "Unused")
-  public var hasExtraLineFragment: Bool
+  var hasExtraLineFragment: Bool
   {
     textLineFragments.last?.isExtraLineFragment ?? false
   }
 
-  public func textLineFragment(at location: NSTextLocation, in textContentManager: NSTextContentManager? = nil) -> NSTextLineFragment?
+  func textLineFragment(at location: NSTextLocation, in textContentManager: NSTextContentManager? = nil) -> NSTextLineFragment?
   {
     guard let textContentManager = textContentManager ?? textLayoutManager?.textContentManager
     else
@@ -208,7 +208,7 @@ extension NSTextLayoutFragment
     }
   }
 
-  public func textLineFragment(at location: CGPoint, in _: NSTextContentManager? = nil) -> NSTextLineFragment?
+  func textLineFragment(at location: CGPoint, in _: NSTextContentManager? = nil) -> NSTextLineFragment?
   {
     textLineFragments.first
     { lineFragment in
@@ -217,9 +217,9 @@ extension NSTextLayoutFragment
   }
 }
 
-extension NSTextLineFragment
+public extension NSTextLineFragment
 {
-  public var isExtraLineFragment: Bool
+  var isExtraLineFragment: Bool
   {
     // textLineFragment.characterRange.isEmpty the extra line fragment at the end of a document.
     characterRange.isEmpty
